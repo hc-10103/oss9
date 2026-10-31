@@ -46,3 +46,43 @@ function makeCell(value) {
   cell.textContent = String(value ?? "");
   return cell;
 }
+
+function renderMovies() {
+  const term = searchInput.value.trim().toLocaleLowerCase();
+  const filtered = movies.filter(movie =>
+    [movie.title, movie.director, movie.distributor]
+      .some(value => String(value ?? "").toLocaleLowerCase().includes(term))
+  );
+  movieList.replaceChildren();
+  for (const movie of filtered) {
+    const row = document.createElement("tr");
+    row.append(makeCell(movie.title), makeCell(movie.director),
+      makeCell(movie.distributor), makeCell(movie.releasedDate));
+    const actions = document.createElement("td");
+    actions.className = "row-actions";
+    for (const [action, label] of [["edit", "수정"], ["delete", "삭제"]]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.action = action;
+      button.dataset.id = movie.id;
+      button.textContent = label;
+      button.disabled = busy;
+      actions.append(button);
+    }
+    row.append(actions);
+    movieList.append(row);
+  }
+  setStatus(`${filtered.length}개 표시 / 전체 ${movies.length}개`);
+}
+
+async function loadMovies() {
+  setStatus("목록을 불러오는 중...");
+  try {
+    const data = await request(API_URL);
+    if (!Array.isArray(data)) throw new Error("목록 형식이 올바르지 않습니다.");
+    movies = data;
+    renderMovies();
+  } catch (error) {
+    setStatus(`목록 조회 실패: ${error.message}`, true);
+  }
+}
