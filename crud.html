@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>영화 기록 | 관리</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="container">
+      <a class="back-link" href="index.html">← 시작 화면</a>
+      <h1>영화 관리</h1>
+
+      <section class="panel">
+        <h2>영화 추가</h2>
+        <form id="movie-form">
+          <div class="fields">
+            <label for="title">제목
+              <input id="title" name="title" type="text" required>
+            </label>
+            <label for="director">감독
+              <input id="director" name="director" type="text" required>
+            </label>
+            <label for="distributor">배급사
+              <input id="distributor" name="distributor" type="text" required>
+            </label>
+            <label for="released-date">개봉일
+              <input id="released-date" name="releasedDate" type="date" required>
+            </label>
+          </div>
+          <button type="submit">추가</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>영화 목록</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">제목</th>
+                <th scope="col">감독</th>
+                <th scope="col">배급사</th>
+                <th scope="col">개봉일</th>
+              </tr>
+            </thead>
+            <tbody id="movie-list"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
