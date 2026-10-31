@@ -13,3 +13,36 @@ const cancelButton = document.querySelector("#cancel-button");
 const searchInput = document.querySelector("#search");
 const status = document.querySelector("#status");
 const movieList = document.querySelector("#movie-list");
+
+let movies = [];
+let busy = false;
+
+function setStatus(message, isError = false) {
+  status.textContent = message;
+  status.classList.toggle("error", isError);
+}
+
+function showFormError(message) {
+  formError.textContent = message;
+  formError.hidden = !message;
+}
+
+function setBusy(value) {
+  busy = value;
+  submitButton.disabled = value;
+  cancelButton.disabled = value;
+  movieList.querySelectorAll("button").forEach(button => { button.disabled = value; });
+}
+
+async function request(url, options = {}) {
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+function makeCell(value) {
+  const cell = document.createElement("td");
+  cell.textContent = String(value ?? "");
+  return cell;
+}
