@@ -86,3 +86,103 @@ async function loadMovies() {
     setStatus(`목록 조회 실패: ${error.message}`, true);
   }
 }
+
+function validateMovie() {
+  const movie = {
+    title: titleInput.value.trim(),
+    director: directorInput.value.trim(),
+    distributor: distributorInput.value.trim(),
+    releasedDate: releasedDateInput.value
+  };
+  if (movie.title.length < 2 || movie.title.length > 80)
+    return { error: "제목은 2~80자로 입력하세요.", input: titleInput };
+  if (movie.director.length < 2 || movie.director.length > 50)
+    return { error: "감독은 2~50자로 입력하세요.", input: directorInput };
+  if (movie.distributor.length < 2 || movie.distributor.length > 50)
+    return { error: "배급사는 2~50자로 입력하세요.", input: distributorInput };
+  const parsedDate = new Date(`${movie.releasedDate}T00:00:00`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(movie.releasedDate) ||
+      Number.isNaN(parsedDate.getTime()) ||
+      [parsedDate.getFullYear(), String(parsedDate.getMonth() + 1).padStart(2, "0"),
+        String(parsedDate.getDate()).padStart(2, "0")].join("-") !== movie.releasedDate)
+    return { error: "올바른 개봉일을 입력하세요.", input: releasedDateInput };
+  return { movie };
+}
+
+function resetForm() {
+  form.reset();
+  movieIdInput.value = "";
+  formTitle.textContent = "영화 추가";
+  submitButton.textContent = "추가";
+  cancelButton.hidden = true;
+  showFormError("");
+}
+
+function startEdit(movie) {
+  movieIdInput.value = movie.id;
+  titleInput.value = movie.title ?? "";
+  directorInput.value = movie.director ?? "";
+  distributorInput.value = movie.distributor ?? "";
+  releasedDateInput.value = movie.releasedDate ?? "";
+  formTitle.textContent = "영화 수정";
+  submitButton.textContent = "수정 저장";
+  cancelButton.hidden = false;
+  showFormError("");
+  titleInput.focus();
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (busy) return;
+  const result = validateMovie();
+  if (result.error) {
+    showFormError(result.error);
+    result.input.focus();
+    return;
+  }
+  showFormError("");
+  const id = movieIdInput.value;
+  const updating = Boolean(id);
+  setBusy(true);
+  try {
+    await request(updating ? `${API_URL}/${encodeURIComponent(id)}` : API_URL, {
+      method: updating ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(result.movie)
+    });
+    resetForm();
+    await loadMovies();
+  } catch (error) {
+    showFormError(`저장 실패: ${error.message}`);
+  } finally {
+    setBusy(false);
+  }
+});
+
+movieList.addEventListener("click", async event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button || busy) return;
+  const movie = movies.find(item => String(item.id) === button.dataset.id);
+  if (!movie) return;
+  if (button.dataset.action === "edit") {
+    startEdit(movie);
+    return;
+  }
+  if (button.dataset.action === "delete" && window.confirm(`“${movie.title}”을(를) 삭제할까요?`)) {
+    setBusy(true);
+    try {
+      await request(`${API_URL}/${encodeURIComponent(movie.id)}`, { method: "DELETE" });
+      if (movieIdInput.value === String(movie.id)) resetForm();
+      await loadMovies();
+    } catch (error) {
+      setStatus(`삭제 실패: ${error.message}`, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+});
+
+cancelButton.addEventListener("click", resetForm);
+searchInput.addEventListener("input", renderMovies);
+loadMovies();
